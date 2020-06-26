@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+##
+## EPITECH PROJECT, 2019
+## automakefile.sh
+## File description:
+## automatic makefile creator
+##
+
+if [ -z "$1" ]
+then
+    echo -n -e "You have to give a valid config file in argument.\n"
+    exit 84
+fi
+if [ ! -f $1 ]
+then
+    echo -n -e "You have to give a valid config file in argument.\n"
+    exit 84
+fi
+
+PDIR=`grep 'PROJECT_DIR' $1 | awk -F ";" '{print $2}'`
+if [ -z "$PDIR" ]
+then
+    echo -n -e "You need to write a project directory in the config file.\n"
+    exit 84
+fi
+if [ -r "$PDIR" ]
+then
+    cd $PDIR
+fi
+
+if test -f Makefile
+then
+    rm Makefile
+fi
+touch Makefile
+
+if ! test -f .num_ver
+then
+    touch .num_ver
+    echo -n "0" >> .num_ver
+fi
+
+echo -n -e "##\n## EPITECH PROJECT, $(date "+%Y")\n## Makefile\n" >> Makefile
+echo -n -e "## File description:\n## A file that make.\n##\n" >> Makefile
+
+CC=`grep 'CC' ../$1 | awk -F ";" '{print $2}'`
+if [ -z $CC ]
+then
+    echo -n -e "\nCC\t=\tgcc\n" >> Makefile
+else
+    echo -n -e "\nCC\t=\t$CC\n" >> Makefile
+fi
+EXEC=`grep 'EXEC' ../$1 | awk -F ";" '{print $2}'`
+if [ -n "$EXEC" ]
+then
+    echo -n -e "\nNAME\t=\t$EXEC\n" >> Makefile
+else
+    echo -n -e "\nNAME\t=\ta.out\n" >> Makefile
+fi
+
+SDIR=`grep 'SOURCES_DIR' ../$1 | awk -F ";" '{print $2}'`
+if [ -r $SDIR ]
+then
+    echo -n -e "\nSRC\t=" >> Makefile
+    grep -F '.c;' ../$1 | awk -F ";" '{print "\t" $1 "\t\\"}' >> Makefile
+fi
+
+if [ -n "$PDIR" ]
+then
+    echo -n -e "\nPROJECT_DIR\t=\t$PDIR/\n" >> Makefile
+else
+    echo -n -e "\nPROJECT_DIR\t=\t./\n" >> Makefile
+fi
+
+if [ ! -r $SDIR ]
+then
+    mkdir "$SDIR"
+fi
+if [ -n "$SDIR" ]
+then
+    echo -n -e "\nSOURCES_DIR\t=\t$SDIR/\n" >> Makefile
+else
+    echo -n -e "\nSOURCES_DIR\t=\t./\n" >> Makefile
+fi
+
+echo -n -e "\nSRCP\t=\t\$(addprefix \$(SOURCES_DIR), \$(SRC))\n" >> Makefile
+
+HDIR=`grep 'HEADERS_DIR' ../$1 | awk -F ";" '{print $2}'`
+if [ ! -r $HDIR ]
+then
+    mkdir "$HDIR"
+fi
+if [ -n "$HDIR" ]
+then
+    echo -n -e "\nHEADERS_DIR\t=\t$HDIR/\n" >> Makefile
+else
+    echo -n -e "\nHEADERS_DIR\t=\t./\n" >> Makefile
+fi
+
+LIBS=`grep 'LIBS_DIR' ../$1 | awk -F ";" '{print $2}'`
+if [ ! -r $LIBS ]
+then
+    mkdir "$LIBS"
+fi
+if [ -n "$LIBS" ]
+then
+    echo -n -e "\nLIBS_DIR\t=\t$LIBS/\n" >> Makefile
+else
+    echo -n -e "\nLIBS_DIR\t=\t./\n" >> Makefile
+fi
+
+echo -n -e "\nOBJ\t=\t\$(SRCP:.c=.o)\n" >> Makefile
+
+CFLG=`grep 'CFLAGS' ../$1 | awk -F ";" '{print $2}'`
+echo -n -e "\nCFLAGS\t=\t" >> Makefile
+if [ -z $HDIR ]
+then
+    echo -n -e "$CFLG\n" >> Makefile
+else
+    echo -n -e "$CFLG -I$HDIR\n" >> Makefile
+fi
+
+BDIR=`grep 'BCK_DIR' ../$1 | awk -F ";" '{print $2}'`
+if [ ! -r $BDIR ]
+then
+    mkdir "$BDIR"
+fi
+if [ -n "$BDIR" ]
+then
+    echo -n -e "\nBCK_DIR\t=\t$BDIR/\n" >> Makefile
+else
+    echo -n -e "\nBCK_DIR\t=\t./\n" >> Makefile
+fi
+
+LDFLG=`grep 'LDFLAGS' ../$1 | awk -F ";" '{print $2}'`
+echo -n -e "\nLDFLAGS\t=\t$LDFLG\n" >> Makefile
+
+ZIP=`grep -F 'ZIP;' ../$1 | head -1 | awk -F ";" '{print $2}'`
+echo -n -e "\nZIP\t=\t$ZIP\n" >> Makefile
+ZIPF=`grep -F 'ZIPFLAGS;' ../$1 | head -1 | awk -F ";" '{print $2}'`
+echo -n -e "\nZIP_F\t=\t$ZIPF\n" >> Makefile
+UZIP=`grep -F 'UNZIP;' ../$1 | awk -F ";" '{print $2}'`
+echo -n -e "\nU_ZIP\t=\t$UZIP\n" >> Makefile
+UZIPF=`grep -F 'UNZIPFLAGS;' ../$1 | awk -F ";" '{print $2}'`
+echo -n -e "\nU_ZIP_F\t=\t$UZIPF\n" >> Makefile
+
+echo -n -e "\nall:\t\$(NAME)\n" >> Makefile
+
+echo -n -e "\n\$(NAME):\t\$(OBJ)\n" >> Makefile
+echo -n -e "\t\$(CC) \$(CFLAGS) \$(LD_FLAGS) \$(OBJ) -o \$(NAME)\n" >> Makefile
+
+echo -n -e "\nclean:\n\t@echo -n \"\033[31m\"\n\trm -f \$(OBJ)\n" >> Makefile
+
+echo -n -e "\nfclean:\n\t@echo -n \"\033[31m\"\n\trm -f \$(NAME)\n" >> Makefile
+
+echo -n -e "\nre:\tfclean all\n" >> Makefile
+
+echo -n -e "\narchive:\n\t@echo -n \"\033[32m\"\n\t\$(ZIP) \$(ZIP_F) \$(BCK_DIR)/archive.\$(ZIP) \$(SRCP)\n" >> Makefile
+echo -n -e "\t@echo \"archive.\$(ZIP) file generated\"\n" >> Makefile
+echo -n -e "\t@echo -n \"1\" >> .num_ver\n" >> Makefile
+
+echo -n -e "\nrevert:\n\t@echo -n \"\033[32m\"\n\trm -f \$(SRCP)\n\t\$(U_ZIP) \$(U_ZIP_F) \$(BCK_DIR)/archive.\$(ZIP)\n" >> Makefile
+if [ "$SDIR/" == "./" ]
+then
+    echo -n -e "\t@echo -n .num_ver | sed -i 's/\(.\{1\}\)//' .num_ver\n" >> Makefile
+else
+    echo -n -e "\tmv \$(SRC) \$(SRCP)\n" >> Makefile
+    echo -n -e "\t@echo -n .num_ver | sed -i 's/\(.\{1\}\)//' .num_ver\n" >> Makefile
+fi
+
+
+echo -n -e "\nnum:\n\t@echo -n \"\033[35m\"\n\t@du -b .num_ver | cut -f 1\n" >> Makefile
+
+echo -n -e "\ndelete:\n\t@echo -n \"\033[35m\"\n\trm -f \$(BCK_DIR)/archive.\$(ZIP)\n" >> Makefile
+
+echo -n -e "\n.PHONY:\tall clean fclean re" >> Makefile
